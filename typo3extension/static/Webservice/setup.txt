@@ -12,6 +12,8 @@ plugin.tx_authagainsttypo3_pi1 {
 	
 	# Comma Separated Fieldlist to give back as 
 	fields = username, name, email
+	
+	minRemoteVersion = {$plugin.tx_authagainsttypo3_pi1.minRemoteVersion}
 }
 
 # TS Template for Athentication

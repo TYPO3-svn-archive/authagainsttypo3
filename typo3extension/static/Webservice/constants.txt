@@ -10,4 +10,6 @@ plugin.tx_authagainsttypo3_pi1 {
 	
 	# cat=AuthAgainstTYPO3: General/links/a2;  type=string; label=fe_groups: List of fe_group uids which are valid
 	fe_groups = 0
+	
+	minRemoteVersion = 1.0.0
 }

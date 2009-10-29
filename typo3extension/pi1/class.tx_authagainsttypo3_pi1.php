@@ -49,17 +49,33 @@ class tx_authagainsttypo3_pi1 extends tslib_pibase {
 		$this->conf=$conf;
 		$this->pi_setPiVarDefaults();
 		$this->pi_loadLL();
+		# Read Version information by loading ext_emconf.php
+		$_EXTKEY = 'authagainsttypo3';
+		require_once(t3lib_extMgm::extPath('authagainsttypo3').'ext_emconf.php');
+
 		
-		
-		
-		$xml= "<?xml version=\"1.0\" encoding=\"".$GLOBALS['TSFE']->renderCharset."\"?>\r\n";
-		
-		#t3lib_div::debug($GLOBALS['TSFE']);
-		#t3lib_div::debug($this->conf);
+		$this->version = $EM_CONF['authagainsttypo3']['version'];
+		if (empty($this->version)) {
+			$this->version = '0.0.0';
+		}
 		
 		/**
-		 * Check if Remote IP is accetped by configuration
-		 * Check if service-User is accepted by Configuration
+		 * build XML by hand is faster than using XML render methods
+		 *
+		 */
+		$xml= "<?xml version=\"1.0\" encoding=\"".$GLOBALS['TSFE']->renderCharset."\"?>\r\n";
+		
+		$xml.="<typo3>";
+		$xml.="<version nr='".$this->version."' />\r\n";
+		
+		/**
+		 * In a later Version, we could integrate a Version Check for the Auth Service,
+		 * when a new Version will be released with an new XML Structure
+		 */
+		
+		
+		/**
+		 * Acces-Check. Set IP, User and passwort in TS Constants
 		 */
 		
 		if ( t3lib_div::cmpIP($_SERVER['REMOTE_ADDR'],$this->conf['remoteIp']) &&
@@ -67,6 +83,10 @@ class tx_authagainsttypo3_pi1 extends tslib_pibase {
 			(t3lib_div::_POST('servicePass') == $this->conf['servicePass']) 
 				) {
 			
+			/*
+			 * Intiantate lokal FE_user for auth
+			 */
+					
 			$this->lok_fe_user = t3lib_div::makeInstance('tslib_feUserAuth');
 
 			$this->lok_fe_user->lockIP = $this->TYPO3_CONF_VARS['FE']['lockIP'];
@@ -88,6 +108,10 @@ class tx_authagainsttypo3_pi1 extends tslib_pibase {
 			}
 			$this->lok_fe_user->fetchGroupData ( );
 			
+			/*
+			 * calculate Groups
+			 */
+			
 			$gr_list = '0,-2';
 			if (is_array($this->lok_fe_user->user) && count($this->lok_fe_user->groupData['uid']))	{
 				
@@ -100,11 +124,7 @@ class tx_authagainsttypo3_pi1 extends tslib_pibase {
 			}
 			$groupAuth = false;
 			if (!$this->conf['fe_groups']) {
-				/**
-			 * @TODO: Check User Group data for Authentication
-			 * Data is in $gr_list
-			 */
-				
+							
 				foreach (t3lib_div::trimExplode(',',$this->conf['fe_groups']) as $oneGroup) {
 					if (t3lib_div::inList( $this->lok_fe_user->user['usergroup'],$oneGroup)) {
 						$groupAuth = true;
@@ -114,9 +134,7 @@ class tx_authagainsttypo3_pi1 extends tslib_pibase {
 				$groupAuth = true;
 			}
 				
-				
-				#t3lib_div::debug($this->lok_fe_user,'$this->lok_fe_user',__FILE__,__LINE__);
-			
+		
 			
 			if (is_array($this->lok_fe_user->user)){
 				if ($this->conf['fields']) {
@@ -131,13 +149,11 @@ class tx_authagainsttypo3_pi1 extends tslib_pibase {
 			}else{
 				$xml .="<error id='1000'>The given TYPO3 Username and Passwort did not match for the configured Storage PID</error>";
 			}
-			
-			#t3lib_div::debug($GLOBALS['TSFE']->fe_user);
-			#$xml .= t3lib_div::array2xml($GLOBALS['TSFE']->fe_user->user);
+		
 		}else{
 			$xml .= "<error id='9000'>You are not allowed to use this service</error>";
 		}
-		
+		$xml.="</typo3>";
 	
 		return($xml);
 	}
